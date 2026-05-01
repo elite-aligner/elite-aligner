@@ -1,86 +1,198 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Elite Aligner</title>
+<title>Elite Aligner Portal</title>
 
 <style>
 body{
+    margin:0;
     font-family: Arial;
     background:#0b0f1a;
     color:white;
+}
+
+/* NAV */
+nav{
+    background:#111827;
+    padding:15px;
     text-align:center;
-    margin-top:100px;
+}
+
+/* CONTAINER */
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+}
+
+/* CARD */
+.card{
+    background:#111827;
+    padding:20px;
+    border-radius:12px;
+    margin-top:20px;
+}
+
+/* INPUT */
+input, button{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border-radius:8px;
+    border:none;
 }
 
 button{
-    padding:15px 25px;
-    font-size:18px;
     background:#00c3ff;
-    border:none;
-    border-radius:10px;
+    color:black;
+    font-weight:bold;
     cursor:pointer;
 }
 
 button:hover{
-    background:#0099cc;
+    background:#00a3cc;
 }
 
-a{
-    color:#00ffcc;
-    display:block;
-    margin-top:20px;
+/* VIDEO */
+video{
+    width:100%;
+    border-radius:10px;
+    margin-top:10px;
 }
 
-.card{
-    background:#111827;
-    padding:30px;
-    border-radius:15px;
-    width:300px;
-    margin:auto;
+.badge{
+    background:#00c3ff;
+    color:black;
+    padding:5px 10px;
+    border-radius:8px;
+    display:inline-block;
+    margin-bottom:10px;
 }
 </style>
-
 </head>
+
 <body>
 
-<div id="app"></div>
+<nav>
+<h2>Elite Aligner System</h2>
+</nav>
 
-<script>
+<div class="container" id="app">
+
+<!-- ADMIN -->
+<div id="adminPage" style="display:none">
+    <div class="card">
+        <span class="badge">Create Case</span>
+
+        <input id="name" placeholder="Patient Name">
+        <input type="file" id="video">
+        <input type="file" id="stl">
+        <input type="file" id="images" multiple>
+
+        <button onclick="createCase()">Create Case</button>
+
+        <p id="status"></p>
+    </div>
+</div>
+
+<!-- CASE VIEW -->
+<div id="casePage" style="display:none">
+    <div class="card">
+        <span class="badge">Case Viewer</span>
+        <h3 id="caseId"></h3>
+        <p id="info">Loading...</p>
+    </div>
+
+    <div class="card">
+        <span class="badge">Video</span>
+        <video id="video" controls></video>
+    </div>
+
+    <div class="card">
+        <span class="badge">Images</span>
+        <div id="images"></div>
+    </div>
+
+    <div class="card">
+        <span class="badge">3D Model</span>
+        <p>STL Viewer (next upgrade)</p>
+    </div>
+</div>
+
+</div>
+
+<script type="module">
+
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+/* 🔴 PUT YOUR KEYS HERE */
+const supabaseUrl = "YOUR_SUPABASE_URL";
+const supabaseKey = "YOUR_ANON_KEY";
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+/* ROUTING */
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
-const app = document.getElementById("app");
 
+/* SHOW PAGE */
 if(id){
-    app.innerHTML = `
-        <div class="card">
-            <h2>Patient Portal</h2>
-            <p>Case ID:</p>
-            <h3>${id}</h3>
-            <p>سيتم عرض الحالة هنا</p>
-        </div>
-    `;
-} else {
-    app.innerHTML = `
-        <h1>Elite Aligner</h1>
-        <p>Generate Patient Link</p>
-
-        <button onclick="generateLink()">توليد رابط</button>
-
-        <div id="result"></div>
-    `;
+    document.getElementById("casePage").style.display = "block";
+    loadCase(id);
+}else{
+    document.getElementById("adminPage").style.display = "block";
 }
 
-function generateLink(){
-    let newId = Math.random().toString(36).substring(2,10);
-    let link = window.location.origin + "?id=" + newId;
+/* CREATE CASE */
+window.createCase = async function(){
 
-    document.getElementById("result").innerHTML =
-        `<a href="${link}" target="_blank">${link}</a>`;
+    const name = document.getElementById("name").value;
+    const video = document.getElementById("video").files[0];
 
-    navigator.clipboard.writeText(link);
-    alert("تم نسخ الرابط!");
+    document.getElementById("status").innerText = "Creating...";
+
+    try{
+
+        let videoUrl = "";
+
+        if(video){
+            const { data } = await supabase.storage
+                .from("cases")
+                .upload(`video/${Date.now()}_${video.name}`, video);
+
+            videoUrl = supabase.storage
+                .from("cases")
+                .getPublicUrl(data.path).data.publicUrl;
+        }
+
+        const { data, error } = await supabase.rpc("create_case", {
+            patient_name: name,
+            video_url: videoUrl
+        });
+
+        if(error) throw error;
+
+        const caseCode = data[0].case_code;
+
+        document.getElementById("status").innerHTML =
+        "Case Created: <br><a href='?id="+caseCode+"'>Open Case</a>";
+
+    }catch(err){
+        document.getElementById("status").innerText = err.message;
+    }
 }
+
+/* LOAD CASE */
+async function loadCase(caseId){
+
+    document.getElementById("caseId").innerText = "Case: " + caseId;
+
+    // لاحقًا نربطه بقاعدة البيانات
+    document.getElementById("info").innerText =
+    "Case loaded (backend ready for full integration)";
+}
+
 </script>
 
 </body>
