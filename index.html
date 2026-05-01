@@ -1,179 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Elite Aligner Portal</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elite Aligner</title>
 
 <style>
 body{
-    margin:0;
-    font-family:Arial;
-    background:#0b0b0b;
-    color:#fff;
+    font-family: Arial;
+    background:#0b0f1a;
+    color:white;
+    text-align:center;
+    margin-top:100px;
 }
 
-/* ANIMATION */
-*{
-    transition:0.3s ease;
+button{
+    padding:15px 25px;
+    font-size:18px;
+    background:#00c3ff;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
 }
 
-/* TOP BAR */
-.topbar{
-    height:60px;
-    background:#111;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 20px;
-    border-bottom:1px solid #222;
+button:hover{
+    background:#0099cc;
 }
 
-.brand{
-    font-weight:bold;
-    letter-spacing:2px;
-}
-
-/* DASHBOARD */
-#dashboard{
-    padding:20px;
+a{
+    color:#00ffcc;
+    display:block;
+    margin-top:20px;
 }
 
 .card{
-    background:#111;
-    padding:15px;
-    margin:10px 0;
-    border-radius:10px;
-    cursor:pointer;
-    box-shadow:0 0 10px #000;
-}
-
-.card:hover{
-    transform:scale(1.02);
-}
-
-/* CASE PAGE */
-#casePage{
-    display:none;
-    padding:20px;
-}
-
-.btn{
-    padding:10px 15px;
-    margin:5px;
-    border:none;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.primary{
-    background:#fff;
-    color:#000;
-}
-
-.whatsapp{
-    background:#25D366;
-    color:#fff;
-}
-
-.back{
-    background:#333;
-    color:#fff;
-}
-
-/* VIEWER */
-.viewer{
-    margin-top:15px;
-    height:70vh;
-    border-radius:10px;
-    overflow:hidden;
-    border:1px solid #222;
-}
-
-iframe{
-    width:100%;
-    height:100%;
-    border:none;
+    background:#111827;
+    padding:30px;
+    border-radius:15px;
+    width:300px;
+    margin:auto;
 }
 </style>
-</head>
 
+</head>
 <body>
 
-<div class="topbar">
-    <div class="brand">ELITE ALIGNER</div>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dashboard">
-    <h2>Dashboard</h2>
-
-    <div class="card" onclick="openCase()">
-        <b>emad</b><br>
-        Case: EA-1029<br>
-        Status: Active
-    </div>
-</div>
-
-<!-- CASE PAGE -->
-<div id="casePage">
-
-    <button class="btn back" onclick="back()">Back</button>
-    <h2>emad</h2>
-
-    <button class="btn primary" onclick="openViewer()">Open Viewer</button>
-    <button class="btn whatsapp" onclick="openWhatsApp()">WhatsApp Update</button>
-
-    <div class="viewer">
-        <iframe id="frame" src=""></iframe>
-    </div>
-
-    <p id="fallback" style="display:none;">
-        Viewer cannot be embedded. Click below:
-        <br><br>
-        <a class="btn primary" href="" target="_blank" id="openNew">Open Secure Viewer</a>
-    </p>
-
-</div>
+<div id="app"></div>
 
 <script>
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+const app = document.getElementById("app");
 
-// 🔗 ArchForm link
-let archformLink = "https://webviewer2.archform.com/?name=emad_farea&data=eyJtb2RlIjoiQWR2YW5jZWQiLCJkb3dubG9hZFVybCI6ImFIUjBjSE02THk5aGNtTm9abTl5YlMxM1pXSXRjMmhoY21WaFlteGxMbk16TFdGalkyVnNaWEpoZEdVdVlXMWhlbTl1WVhkekxtTnZiUzkzWldJdGRtbGxkMlZ5TDNWekxXVmhjM1F0TWpvNVpUVmlNMlV6T1MwMlpEUmtMV05tTkRrdFpXSTJOaTFoTURSbE5EVmhaamMxTURndk0wTnRRVmhTYlRSbGNXNUZha1p3VVV0bk5UWlRVM2xyUVdKdUwzTmxkSFZ3WDJacGJHVXZNME4xV1UxM1FURXhiVmxqYzBOeE5EVlFaRXR0VEdRNE9ETlVMbnBwY0E9PSJ9";
+if(id){
+    app.innerHTML = `
+        <div class="card">
+            <h2>Patient Portal</h2>
+            <p>Case ID:</p>
+            <h3>${id}</h3>
+            <p>سيتم عرض الحالة هنا</p>
+        </div>
+    `;
+} else {
+    app.innerHTML = `
+        <h1>Elite Aligner</h1>
+        <p>Generate Patient Link</p>
 
-function openCase(){
-    document.getElementById("dashboard").style.display="none";
-    document.getElementById("casePage").style.display="block";
+        <button onclick="generateLink()">توليد رابط</button>
+
+        <div id="result"></div>
+    `;
 }
 
-function back(){
-    document.getElementById("dashboard").style.display="block";
-    document.getElementById("casePage").style.display="none";
+function generateLink(){
+    let newId = Math.random().toString(36).substring(2,10);
+    let link = window.location.origin + "?id=" + newId;
+
+    document.getElementById("result").innerHTML =
+        `<a href="${link}" target="_blank">${link}</a>`;
+
+    navigator.clipboard.writeText(link);
+    alert("تم نسخ الرابط!");
 }
-
-function openViewer(){
-
-    let frame = document.getElementById("frame");
-    frame.src = archformLink;
-
-    document.getElementById("openNew").href = archformLink;
-
-    // fallback check
-    setTimeout(()=>{
-        try{
-            if(!frame.contentWindow){
-                document.getElementById("fallback").style.display="block";
-            }
-        }catch(e){
-            document.getElementById("fallback").style.display="block";
-        }
-    },2000);
-}
-
-function openWhatsApp(){
-    window.open("https://wa.me/966506871079?text=emad%20case%20update%20in%20progress","_blank");
-}
-
 </script>
 
 </body>
